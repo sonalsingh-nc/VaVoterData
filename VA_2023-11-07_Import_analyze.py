@@ -1,13 +1,5 @@
 import pandas as pd
 
-# Load the CSV file into a DataFrame
-election_df = pd.read_csv('VA_Election Turnout_2023-11-07.csv')
-
-# Display the first few rows of the DataFrame to verify the data has been imported correctly
-print(election_df.head())
-print(election_df.columns)
-# ['election', 'election_date', 'locality', 'precinct', 'Early Voting', 'Provisional', 'Election Day', 'Mailed Absentee', 'Post-Election',
-#  'TotalVoteTurnout', 'ActiveRegisteredVoters', 'InactiveRegisteredVoters', 'TotalRegisteredVoters', '% (totalTurnout_Active)']
 
 ##  Download the ShapeZip Files
 ## https://www.elections.virginia.gov/casting-a-ballot/redistricting/gis/
@@ -108,9 +100,16 @@ for filename in os.listdir(destination_directory):
         # Load the Shapefile for county boundaries with precincts
         print('filename is: '+filename)
         this_county_gdf = gpd.read_file(destination_directory+'\\'+filename)
+
         gdfs.append(this_county_gdf)
-        # Concatenate all GeoDataFrames into a single GeoDataFrame
+
+# Concatenate all GeoDataFrames into a single GeoDataFrame
 county_gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
+
+# Print information about the merged GeoDataFrame
+print("Merged GeoDataFrame:")
+print(county_gdf.info())
+
 # Display the first few rows of the DataFrame to verify the data has been imported correctly
 print(county_gdf.head())
 print(county_gdf.columns)
@@ -142,11 +141,106 @@ county_gdf['PrecinctFullName'] = county_gdf.apply(create_full_name, axis=1)
 # Print the updated dataframe
 print(county_gdf)
 
+import geopandas as gpd
+
+county_gdf.to_parquet('county_gdf.parquet')
+# Part A: End of part, which creates downloads, Unzips and creates the Precinct Level ShapeFiles DataFrame
+##################################################################################################
+
+
+
+
+# Part B: Import Election Data, Merge it with the ShapeFile GDF
+################################################################
+
+import geopandas as gpd
+import pandas as pd
+
+# Read the DataFrame from the Parquet file
+county_gdf = gpd.read_parquet('county_gdf.parquet')
+
+
+# Load the CSV file into a DataFrame
+election_df = pd.read_csv('VA_Election Turnout_2023-11-07.csv')
+
+# Define a function to calculate the turnout percentage
+
+def calculate_turnout_pct(row):
+    if not pd.isna(row['ActiveRegisteredVoters']) and row['ActiveRegisteredVoters'] > 0:
+        if not pd.isna(row['TotalVoteTurnout']):
+            return row['TotalVoteTurnout'] / row['ActiveRegisteredVoters'] * 100
+    return 0
+
+# Apply the function to create the new column
+election_df['Turnout_pct'] = election_df.apply(calculate_turnout_pct, axis=1)
+
+# Display the first few rows of the DataFrame to verify the data has been imported correctly
+print(election_df.head())
+print(election_df.columns)
+# ['election', 'election_date', 'locality', 'precinct', 'Early Voting', 'Provisional', 'Election Day', 'Mailed Absentee', 'Post-Election',
+#  'TotalVoteTurnout', 'ActiveRegisteredVoters', 'InactiveRegisteredVoters', 'TotalRegisteredVoters', '% (totalTurnout_Active)']
 merged_df = county_gdf.merge(election_df, how='left', left_on='PrecinctFullName', right_on='precinct')
 
-# Plot the turnout by precinct
-fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-merged_df.plot(column='% (totalTurnout_Active)', ax=ax, legend=True, cmap='OrRd', edgecolor='black')
-ax.set_title('Turnout by Precinct')
+# Add Precinct labels to the map  
+# https://geopandas.org/en/stable/gallery/plotting_basemap_background.html
+# Add a base map of Virginia as a layer
+
+# Load the base map of Virginia
+# <Geographic 2D CRS: EPSG:4326>
+# Name: WGS 84
+# Load the Virginia city and county census boundaries dataset
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+virginia_boundaries = gpd.read_file('D:\Sonal\Documents\GitHub\VaVoterData\ShapeFiles\City_County\SDE_USDC_CENSUS_VA_COUNTY.shp')
+virginia_boundaries.info()
+print(virginia_boundaries)
+print(virginia_boundaries[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
+
+# Filter out the cities (excluding counties)
+virginia_cities = virginia_boundaries[virginia_boundaries['NAMELSAD'].str.contains('city')]
+virginia_cities.info()
+print(virginia_cities[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
+
+# Reproject the geometries to a projected CRS
+virginia_cities = virginia_cities.to_crs('EPSG:3857')  # Example of a commonly used projected CRS (Web Mercator)
+virginia_boundaries = virginia_boundaries.to_crs('EPSG:3857') 
+
+# Plot the base map
+ax = virginia_boundaries.plot(color='lightgrey', edgecolor='black' , linewidth=0.25)
+
+# Plot the cities on top of the base map
+virginia_cities.plot(ax=ax, color='lightblue', edgecolor='black', linewidth=0.50)
+
+# Add city names as annotations
+for x, y, label in zip(virginia_cities.geometry.centroid.x, virginia_cities.geometry.centroid.y, virginia_cities['NAME']):
+    ax.text(x, y, label, fontsize=6, ha='center', va='top', color='black') 
+
+
+# Plot the base map
+# Plot the turnout by precinct on top of the base map
+# First change the CRS (Co-ordinate Reference System) of the merged_df to match the base_map
+merged_df = merged_df.to_crs('EPSG:3857')
+merged_df.plot(column='Turnout_pct', ax=ax, legend=True, cmap='OrRd', edgecolor='grey', linewidth=0.20)
+
+print(merged_df)
+
+# Filter in the precincts with Voters > 4000  
+merged_df_cities = merged_df[merged_df['ActiveRegisteredVoters'].gt(4000)]
+merged_df_cities.info()
+
+
+# Add callouts for each geometry in the GeoDataFrame
+for idx, row in merged_df_cities.iterrows():
+    Turnout_pct =  int(row['Turnout_pct']) if not pd.isna(row['Turnout_pct']) else 0
+    ax.annotate(text=str(Turnout_pct), xy=(row.geometry.centroid.x, row.geometry.centroid.y),
+                xytext=(7, 7), textcoords="offset points", fontsize=6, ha='center', va='center', color='black')
+
+ax.set_title('VA 2023-11-07 State Senate & House - Turnout by Precinct')
+ax.axis('off')
+
+# Show the plot
 plt.show()
 
+# Save the Plot as a PNG file in the same directory 
+plt.savefig('VA 2023-11-07 State Senate & House - Turnout by Precinct.png')
