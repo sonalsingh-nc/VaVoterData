@@ -11,10 +11,10 @@ virginia_cities = virginia_boundaries[virginia_boundaries['NAMELSAD'].str.contai
 virginia_cities.info()
 
 # Plot the base map
-ax = virginia_boundaries.plot(color='lightgrey', edgecolor='black', linewidth=0.25)
+ax = virginia_boundaries.plot(color='lightgrey', edgecolor='grey', linewidth=0.25)
 
 # Plot the cities on top of the base map
-virginia_cities.plot(ax=ax, color='lightblue', edgecolor='black' , linewidth=0.25)
+virginia_cities.plot(ax=ax, color='lightblue', edgecolor='black' , linewidth=0.50)
 
 # Add city names as annotations
 for x, y, label in zip(virginia_cities.geometry.centroid.x, virginia_cities.geometry.centroid.y, virginia_cities['NAME']):
@@ -24,5 +24,8 @@ for x, y, label in zip(virginia_cities.geometry.centroid.x, virginia_cities.geom
 plt.title('Virginia Cities')
 
 # Show the plot
+
+# Save the plot to a PNG file with custom parameters
+plt.savefig('D:\Sonal\Documents\GitHub\VaVoterData\VA City Example.png', dpi=900, bbox_inches='tight')
 plt.show()
-plt.savefig('D:\Sonal\Documents\GitHub\VaVoterData\VA City Example.png')
+

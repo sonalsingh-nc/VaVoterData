@@ -197,8 +197,9 @@ virginia_boundaries.info()
 print(virginia_boundaries)
 print(virginia_boundaries[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
 
-# Filter out the cities (excluding counties)
-virginia_cities = virginia_boundaries[virginia_boundaries['NAMELSAD'].str.contains('city')]
+# Filter out the cities (excluding counties) and specific city names
+city_names = ['Richmond', 'Charlottesville', 'Manassas', 'Fairfax', 'Chesapeake','Bristol', 'Galax', 'Norton', 'Suffolk', 'Portsmouth', 'Norfolk', 'Newport News', 'Hampton', 'Williamsburg', 'Poquoson', 'Virginia Beach']
+virginia_cities = virginia_boundaries[(virginia_boundaries['NAMELSAD'].str.contains('city')) & (virginia_boundaries['NAME'].isin(city_names))]
 virginia_cities.info()
 print(virginia_cities[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
 
@@ -226,7 +227,7 @@ merged_df.plot(column='Turnout_pct', ax=ax, legend=True, cmap='OrRd', edgecolor=
 print(merged_df)
 
 # Filter in the precincts with Voters > 4000  
-merged_df_cities = merged_df[merged_df['ActiveRegisteredVoters'].gt(4000)]
+merged_df_cities = merged_df[merged_df['ActiveRegisteredVoters'].gt(5000)]
 merged_df_cities.info()
 
 
@@ -234,13 +235,12 @@ merged_df_cities.info()
 for idx, row in merged_df_cities.iterrows():
     Turnout_pct =  int(row['Turnout_pct']) if not pd.isna(row['Turnout_pct']) else 0
     ax.annotate(text=str(Turnout_pct), xy=(row.geometry.centroid.x, row.geometry.centroid.y),
-                xytext=(7, 7), textcoords="offset points", fontsize=6, ha='center', va='center', color='black')
+                xytext=(7,7), textcoords="offset points", fontsize=6, ha='center', va='center', color='black')
 
 ax.set_title('VA 2023-11-07 State Senate & House - Turnout by Precinct')
 ax.axis('off')
 
+# Save the Plot as a PNG file in the same directory 
+plt.savefig('VA 2023-11-07 State Senate & House - Turnout by Precinct.png', dpi=900, bbox_inches='tight')
 # Show the plot
 plt.show()
-
-# Save the Plot as a PNG file in the same directory 
-plt.savefig('VA 2023-11-07 State Senate & House - Turnout by Precinct.png')
