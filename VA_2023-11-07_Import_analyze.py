@@ -198,7 +198,7 @@ print(virginia_boundaries)
 print(virginia_boundaries[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
 
 # Filter out the cities (excluding counties) and specific city names
-city_names = ['Richmond', 'Charlottesville', 'Manassas', 'Fairfax', 'Chesapeake','Bristol', 'Galax', 'Norton', 'Suffolk', 'Portsmouth', 'Norfolk', 'Newport News', 'Hampton', 'Williamsburg', 'Poquoson', 'Virginia Beach']
+city_names = ['Richmond', 'Charlottesville', 'Manassas', 'Lynchburg', 'Fairfax', 'Chesapeake','Bristol', 'Galax', 'Norton', 'Danville', 'Portsmouth',  'Hampton', 'Williamsburg',  'Virginia Beach']
 virginia_cities = virginia_boundaries[(virginia_boundaries['NAMELSAD'].str.contains('city')) & (virginia_boundaries['NAME'].isin(city_names))]
 virginia_cities.info()
 print(virginia_cities[['NAME', 'NAMELSAD', 'LSAD','CLASSFP', 'COUNTYFP', 'COUNTYNS']])
@@ -215,7 +215,7 @@ virginia_cities.plot(ax=ax, color='lightblue', edgecolor='black', linewidth=0.50
 
 # Add city names as annotations
 for x, y, label in zip(virginia_cities.geometry.centroid.x, virginia_cities.geometry.centroid.y, virginia_cities['NAME']):
-    ax.text(x, y, label, fontsize=6, ha='center', va='top', color='black') 
+    ax.text(x, y, label, fontsize=8, ha='center', va='top', color='black') 
 
 
 # Plot the base map
