@@ -1,6 +1,12 @@
+################################################################################################
+# This Python script downloads the ShapeZip Files from the Virginia Election Commission website
+# It then extracts the ShapeFiles and creates a GeoDataFrame
+# It then imports the Election Data and merges it with the ShapeFile GDF
+# It then creates a map of the Turnout by Precinct
+# The map is saved as a PNG file in the same directory
+###############################################################################################    
+
 import pandas as pd
-
-
 ##  Download the ShapeZip Files
 ## https://www.elections.virginia.gov/casting-a-ballot/redistricting/gis/
 import os
