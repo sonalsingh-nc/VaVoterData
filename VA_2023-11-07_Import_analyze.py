@@ -221,7 +221,7 @@ virginia_cities.plot(ax=ax, color='lightblue', edgecolor='black', linewidth=0.50
 
 # Add city names as annotations
 for x, y, label in zip(virginia_cities.geometry.centroid.x, virginia_cities.geometry.centroid.y, virginia_cities['NAME']):
-    ax.text(x, y, label, fontsize=8, ha='center', va='top', color='black') 
+    ax.text(x, y, label, fontsize=7, ha='center', va='top', color='black') 
 
 
 # Plot the base map
@@ -241,7 +241,7 @@ merged_df_cities.info()
 for idx, row in merged_df_cities.iterrows():
     Turnout_pct =  int(row['Turnout_pct']) if not pd.isna(row['Turnout_pct']) else 0
     ax.annotate(text=str(Turnout_pct), xy=(row.geometry.centroid.x, row.geometry.centroid.y),
-                xytext=(7,7), textcoords="offset points", fontsize=6, ha='center', va='center', color='black')
+                xytext=(7,7), textcoords="offset points", fontsize=5, ha='center', va='center', color='black')
 
 ax.set_title('VA 2023-11-07 State Senate & House - Turnout by Precinct')
 ax.axis('off')
